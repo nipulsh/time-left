@@ -210,7 +210,7 @@ const createWindow = async () => {
     frame: false,
     transparent: false,
     resizable: true,
-    skipTaskbar: false,
+    skipTaskbar: true, // Hide from taskbar and recent apps
     minimizable: true,
     maximizable: false,
   });
