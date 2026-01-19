@@ -61,8 +61,10 @@ export async function createTask(input: CreateTaskInput) {
     repeatEndDate: input.repeatEndDate,
   };
 
-  if (input.groupId) {
+  if (input.groupId && typeof input.groupId === 'string' && input.groupId.trim() !== '') {
     taskData.groupId = new mongoose.Types.ObjectId(input.groupId);
+  } else {
+    taskData.groupId = null; // Explicitly set to null for no-group tasks
   }
 
   const task = await Task.create(taskData);
@@ -77,9 +79,14 @@ export async function getTasks(includeCompleted = false, groupId?: string) {
     query.completed = false;
   }
   
-  if (groupId) {
+  // Filter by group: if groupId is provided, filter by it; if undefined, show all
+  if (groupId !== undefined && groupId !== null && groupId !== '') {
     query.groupId = new mongoose.Types.ObjectId(groupId);
+  } else if (groupId === null || groupId === '') {
+    // Explicitly show only tasks without groups
+    query.groupId = null;
   }
+  // If groupId is undefined, don't filter by group (show all tasks)
 
   const tasks = await Task.find(query)
     .populate('groupId')
@@ -105,10 +112,10 @@ export async function updateTask(id: string, data: Partial<CreateTaskInput & { c
   await connectMongoDB();
   const updateData: any = { ...data };
   
-  if (data.groupId) {
+  if (data.groupId && typeof data.groupId === 'string' && data.groupId.trim() !== '') {
     updateData.groupId = new mongoose.Types.ObjectId(data.groupId);
-  } else if (data.groupId === null) {
-    updateData.groupId = null;
+  } else {
+    updateData.groupId = null; // Explicitly set to null for no-group tasks
   }
 
   const task = await Task.findByIdAndUpdate(

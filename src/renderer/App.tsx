@@ -5,6 +5,8 @@ import type { Task, CreateTaskData, TaskGroup } from './api/tasks';
 import TaskModal from './components/TaskModal';
 import TaskDetailModal from './components/TaskDetailModal';
 import DeleteConfirmModal from './components/DeleteConfirmModal';
+import Modal from './components/Modal';
+import GroupsManagement from './components/GroupsManagement';
 
 // Icons
 const SunIcon = () => (
@@ -123,6 +125,9 @@ function TasksPanel({
   newGroupName,
   onNewGroupNameChange,
   onAddGroup,
+  onEditGroup,
+  onDeleteGroup,
+  onShowGroupsManagement,
 }: {
   expanded: boolean;
   tasks: Task[];
@@ -143,6 +148,9 @@ function TasksPanel({
   newGroupName: string;
   onNewGroupNameChange: (value: string) => void;
   onAddGroup: (e: React.FormEvent) => void;
+  onEditGroup: (group: TaskGroup) => void;
+  onDeleteGroup: (group: TaskGroup) => void;
+  onShowGroupsManagement: (show: boolean) => void;
 }) {
   const incompleteTasks = tasks.filter((t) => !t.completed);
   const allTasksCount = incompleteTasks.length;
@@ -193,6 +201,23 @@ function TasksPanel({
           >
             + Add
           </button>
+          <button
+            type="button"
+            onClick={() => onShowGroupsManagement(true)}
+            style={{
+              padding: '4px 8px',
+              background: 'var(--countdown-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              color: 'var(--text-primary)',
+              fontSize: '10px',
+              cursor: 'pointer',
+              fontWeight: '600',
+            }}
+            title="Manage Groups"
+          >
+            Edit Groups
+          </button>
         </div>
       </div>
 
@@ -207,27 +232,114 @@ function TasksPanel({
             All
           </button>
           {taskGroups.map((group) => (
-            <button
+            <div
               key={group.id}
-              type="button"
-              className={`task-group-chip ${
-                selectedGroupId === group.id ? 'active' : ''
-              }`}
-              onClick={() => onSelectGroup(group.id)}
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={(e) => {
+                const menu = e.currentTarget.querySelector('.group-menu');
+                if (menu) (menu as HTMLElement).style.display = 'flex';
+              }}
+              onMouseLeave={(e) => {
+                const menu = e.currentTarget.querySelector('.group-menu');
+                if (menu) (menu as HTMLElement).style.display = 'none';
+              }}
             >
-              {group.color && (
-                <span
-                  className="task-group-color"
-                  style={{ background: group.color }}
-                />
-              )}
-              {group.name}
-              {group._count && group._count.tasks > 0 && (
-                <span style={{ fontSize: '9px', opacity: 0.7 }}>
-                  ({group._count.tasks})
-                </span>
-              )}
-            </button>
+              <button
+                type="button"
+                className={`task-group-chip ${
+                  selectedGroupId === group.id ? 'active' : ''
+                }`}
+                onClick={() => onSelectGroup(group.id)}
+              >
+                {group.color && (
+                  <span
+                    className="task-group-color"
+                    style={{ background: group.color }}
+                  />
+                )}
+                {group.name}
+                {group._count && group._count.tasks > 0 && (
+                  <span style={{ fontSize: '9px', opacity: 0.7 }}>
+                    ({group._count.tasks})
+                  </span>
+                )}
+              </button>
+              <div
+                className="group-menu"
+                style={{
+                  display: 'none',
+                  position: 'absolute',
+                  right: '0',
+                  top: '100%',
+                  marginTop: '4px',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  padding: '4px',
+                  zIndex: 10,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  flexDirection: 'column',
+                  gap: '2px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditGroup(group);
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-primary)',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--countdown-bg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteGroup(group);
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-danger, #ef4444)',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--countdown-bg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           ))}
           <button
             type="button"
@@ -440,6 +552,11 @@ export default function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [showDeleteGroupConfirm, setShowDeleteGroupConfirm] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<TaskGroup | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState('');
+  const [showGroupsManagement, setShowGroupsManagement] = useState(false);
 
   // Apply theme
   useEffect(() => {
@@ -449,7 +566,7 @@ export default function App() {
 
   // Handle window resize based on expansion
   useEffect(() => {
-    const height = expanded ? 500 : 140;
+    const height = expanded ? 500 : 200;
     window.electron?.ipcRenderer.sendMessage('resize-window', [height]);
   }, [expanded]);
 
@@ -525,6 +642,57 @@ export default function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create group');
     }
+  };
+
+  // Edit task group
+  const handleEditGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedGroup || !editingGroupName.trim()) return;
+
+    try {
+      await taskAPI.updateTaskGroup(selectedGroup.id, {
+        name: editingGroupName.trim(),
+      });
+      setEditingGroupName('');
+      setShowEditGroup(false);
+      setSelectedGroup(null);
+      await fetchTaskGroups();
+      // Always refresh tasks to update group names in task list
+      await fetchTasks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update group');
+    }
+  };
+
+  // Delete task group
+  const handleDeleteGroup = async () => {
+    if (!selectedGroup) return;
+    try {
+      await taskAPI.deleteTaskGroup(selectedGroup.id);
+      setShowDeleteGroupConfirm(false);
+      setSelectedGroup(null);
+      // If we were viewing this group, switch to "All"
+      if (selectedGroupId === selectedGroup.id) {
+        setSelectedGroupId(undefined);
+      }
+      await fetchTaskGroups();
+      await fetchTasks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete group');
+    }
+  };
+
+  // Open edit group modal
+  const handleEditGroupClick = (group: TaskGroup) => {
+    setSelectedGroup(group);
+    setEditingGroupName(group.name);
+    setShowEditGroup(true);
+  };
+
+  // Open delete group confirmation
+  const handleDeleteGroupClick = (group: TaskGroup) => {
+    setSelectedGroup(group);
+    setShowDeleteGroupConfirm(true);
   };
 
   // Delete task
@@ -620,6 +788,9 @@ export default function App() {
         newGroupName={newGroupName}
         onNewGroupNameChange={setNewGroupName}
         onAddGroup={handleAddGroup}
+        onEditGroup={handleEditGroupClick}
+        onDeleteGroup={handleDeleteGroupClick}
+        onShowGroupsManagement={setShowGroupsManagement}
       />
 
       {/* Modals */}
@@ -663,6 +834,119 @@ export default function App() {
         onConfirm={handleDeleteTask}
         title="Delete Task"
         itemName={selectedTask?.title}
+      />
+
+      {/* Edit Group Modal */}
+      {showEditGroup && selectedGroup && (
+        <Modal
+          isOpen={showEditGroup}
+          onClose={() => {
+            setShowEditGroup(false);
+            setSelectedGroup(null);
+            setEditingGroupName('');
+          }}
+          title="Edit Group"
+          size="small"
+        >
+          <form
+            onSubmit={handleEditGroup}
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+          >
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Group Name
+              </label>
+              <input
+                type="text"
+                value={editingGroupName}
+                onChange={(e) => setEditingGroupName(e.target.value)}
+                placeholder="Group name"
+                required
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                }}
+                autoFocus
+              />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditGroup(false);
+                  setSelectedGroup(null);
+                  setEditingGroupName('');
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: 'var(--countdown-bg)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  color: 'var(--text-secondary)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                style={{
+                  padding: '8px 16px',
+                  background: 'var(--accent-primary)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Delete Group Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteGroupConfirm}
+        onClose={() => {
+          setShowDeleteGroupConfirm(false);
+          setSelectedGroup(null);
+        }}
+        onConfirm={handleDeleteGroup}
+        title="Delete Group"
+        itemName={selectedGroup?.name}
+        message="All tasks in this group will be moved to 'No Group'. This action cannot be undone."
+      />
+
+      {/* Groups Management Modal */}
+      <GroupsManagement
+        isOpen={showGroupsManagement}
+        onClose={() => setShowGroupsManagement(false)}
+        onGroupsUpdated={async () => {
+          await fetchTaskGroups();
+          await fetchTasks();
+        }}
       />
     </div>
   );

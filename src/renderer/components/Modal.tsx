@@ -42,7 +42,7 @@ export default function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -56,7 +56,13 @@ export default function Modal({
             <button
               type="button"
               className="modal-close"
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onClose) {
+                  onClose();
+                }
+              }}
               aria-label="Close modal"
             >
               ×

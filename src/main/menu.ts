@@ -38,18 +38,18 @@ export default class MenuBuilder {
   }
 
   setupDevelopmentEnvironment(): void {
-    this.mainWindow.webContents.on('context-menu', (_, props) => {
-      const { x, y } = props;
-
-      Menu.buildFromTemplate([
-        {
-          label: 'Inspect element',
-          click: () => {
-            this.mainWindow.webContents.inspectElement(x, y);
-          },
-        },
-      ]).popup({ window: this.mainWindow });
-    });
+    // Context menu with DevTools removed to prevent console window
+    // this.mainWindow.webContents.on('context-menu', (_, props) => {
+    //   const { x, y } = props;
+    //   Menu.buildFromTemplate([
+    //     {
+    //       label: 'Inspect element',
+    //       click: () => {
+    //         this.mainWindow.webContents.inspectElement(x, y);
+    //       },
+    //     },
+    //   ]).popup({ window: this.mainWindow });
+    // });
   }
 
   buildDarwinTemplate(): MenuItemConstructorOptions[] {
@@ -117,13 +117,7 @@ export default class MenuBuilder {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
           },
         },
-        {
-          label: 'Toggle Developer Tools',
-          accelerator: 'Alt+Command+I',
-          click: () => {
-            this.mainWindow.webContents.toggleDevTools();
-          },
-        },
+        // Developer Tools menu item removed
       ],
     };
     const subMenuViewProd: MenuItemConstructorOptions = {
@@ -232,13 +226,7 @@ export default class MenuBuilder {
                     );
                   },
                 },
-                {
-                  label: 'Toggle &Developer Tools',
-                  accelerator: 'Alt+Ctrl+I',
-                  click: () => {
-                    this.mainWindow.webContents.toggleDevTools();
-                  },
-                },
+                // Developer Tools menu item removed
               ]
             : [
                 {

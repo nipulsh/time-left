@@ -162,9 +162,10 @@ if (process.env.NODE_ENV === 'production') {
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
-if (isDebug) {
-  require('electron-debug').default();
-}
+// Disabled electron-debug to prevent console window from opening
+// if (isDebug) {
+//   require('electron-debug').default();
+// }
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -195,7 +196,7 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     width: 320,
-    height: 140,
+    height: 280,
     minWidth: 280,
     minHeight: 120,
     maxWidth: 500,

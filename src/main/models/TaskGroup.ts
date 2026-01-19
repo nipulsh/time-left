@@ -61,7 +61,7 @@ TaskGroupSchema.virtual('taskCount', {
 });
 
 // Pre-save hook: Ensure color is set (generate random if not provided)
-TaskGroupSchema.pre('save', function (next) {
+TaskGroupSchema.pre('save', async function () {
   if (!this.color) {
     // Generate a random color
     const colors = [
@@ -71,7 +71,6 @@ TaskGroupSchema.pre('save', function (next) {
     ];
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
-  next();
 });
 
 // Instance method: Get all tasks in this group
